@@ -1,11 +1,10 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "compact-export",
+	"name": "Compact Export",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "Exports to some maximum number of pages, maximizing font size for readability.",
+	"author": "Robert Mertens",
+	"authorUrl": "https://mertensrh.com/",
 	"isDesktopOnly": false
 }
