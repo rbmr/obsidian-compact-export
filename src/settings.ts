@@ -1,36 +1,29 @@
-import {App, PluginSettingTab, Setting} from "obsidian";
-import MyPlugin from "./main";
+export interface CompactExportSettings {
+	maxPageCount: number;
 
-export interface MyPluginSettings {
-	mySetting: string;
+	// Layout Constraints
+	minColumns: number;
+	maxColumns: number;
+	minFontSize: number;
+	maxFontSize: number;
+
+	// Spacing (Relative units, e.g., '1.2' means 1.2em)
+	lineHeight: number;       // e.g., 1.2
+	columnGap: number;        // e.g., 2 (2em)
+	pageMargin: number;       // e.g., 20 (mm)
+
+	// Compact Options
+	makeBlockFormulasInline: boolean;
 }
 
-export const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
-}
-
-export class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
-
-	constructor(app: App, plugin: MyPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const {containerEl} = this;
-
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName('Settings #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
-	}
-}
+export const DEFAULT_SETTINGS: CompactExportSettings = {
+	maxPageCount: 2,
+	minColumns: 1,
+	maxColumns: 3,
+	minFontSize: 8,
+	maxFontSize: 14,
+	lineHeight: 1.2,
+	columnGap: 2.0,
+	pageMargin: 15, // mm
+	makeBlockFormulasInline: true,
+};
