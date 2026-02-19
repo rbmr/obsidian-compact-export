@@ -1,6 +1,6 @@
-import {Plugin, Notice, TFile, App, PluginSettingTab, Setting, MarkdownRenderer, Component} from 'obsidian';
-import { LayoutSolver } from './solver';
+import {Plugin, Notice, TFile, App, PluginSettingTab, Setting, Component, MarkdownRenderer} from 'obsidian';
 import { DEFAULT_SETTINGS, CompactExportSettings } from './settings';
+import {findOptimalSettings} from "./solver";
 
 export default class CompactExportPlugin extends Plugin {
 	settings: CompactExportSettings;
@@ -24,121 +24,26 @@ export default class CompactExportPlugin extends Plugin {
 		});
 	}
 
-	async runExport(file: TFile) {
-		new Notice(`Optimizing layout for ${file.basename}...`);
-
-		const solver = new LayoutSolver(this.app, this.settings);
-		const bestParams = await solver.solve(file);
-
-		if (!bestParams) {
-			new Notice("Could not fit content within page limits even at minimum settings.");
-			return;
+	private preprocessMarkdown(content: string): string {
+		let processed = content;
+		if (this.settings.makeBlockFormulasInline) {
+			processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
+				return `$${formula.trim()}$`;
+			});
 		}
+		return processed;
+	}
 
-		const printContainer = document.body.createDiv('compact-export-container');
-		const component = new Component();
+	private getStyles(fontSize: number, cols: number, mode: 'measure' | 'print'): string {
+		// TODO: implement this. This should be the single source of truth for styling.
+		return ""
+	}
 
-		const markdown = await this.app.vault.read(file);
-		const processedMarkdown = this.settings.makeBlockFormulasInline
-			? solver.compactFormulas(markdown)
-			: markdown;
-
-		await MarkdownRenderer.render(this.app, processedMarkdown, printContainer, file.path, component);
-
-		const styleEl = document.createElement('style');
-		styleEl.id = 'compact-export-styles';
-
-		styleEl.innerHTML = `
-			/* Hide on screen: Use off-screen positioning instead of visibility:hidden 
-			   to ensure internal layout engines render the content properly before print. */
-			.compact-export-container {
-				position: absolute;
-				top: 0;
-				left: -9999px;
-				width: 100%;
-				z-index: -1;
-				background-color: white;
-			}
-
-			@media print {
-				/* 1. Reset Global Styles to allow full-page printing */
-				html, body {
-					height: auto !important;
-					overflow: visible !important;
-					margin: 0 !important;
-					padding: 0 !important;
-					background: white !important;
-				}
-
-				/* 2. Hide the standard Obsidian Interface */
-				body > *:not(.compact-export-container) {
-					display: none !important;
-				}
-
-				/* 3. Setup the Print Container */
-				.compact-export-container {
-					position: static !important; /* Bring back into flow */
-					display: block !important;
-					left: 0 !important;
-					z-index: 9999;
-					
-					/* Force Black on White (Fixes Dark Mode blank pages) */
-					color: black !important;
-					background-color: white !important;
-					
-					/* Apply the calculated compact settings */
-					font-size: ${bestParams.fontSize}pt !important;
-					line-height: ${this.settings.lineHeight} !important;
-					column-count: ${bestParams.columns} !important;
-					column-gap: ${this.settings.columnGap}em !important;
-					
-					/* Reset heights to ensure full print */
-					height: auto !important;
-					overflow: visible !important;
-				}
-
-				/* Ensure child elements inherit the high contrast color */
-				.compact-export-container * {
-					color: inherit;
-				}
-
-				/* Page Margins */
-				@page {
-					margin: ${this.settings.pageMargin}mm !important;
-					size: auto; 
-				}
-
-				/* Prevent page breaks inside critical elements */
-				p, h1, h2, h3, h4, h5, li {
-					break-inside: avoid;
-				}
-
-				/* MathJax Tweaks */
-				${this.settings.makeBlockFormulasInline ? `
-				.MathJax_Display {
-					display: inline-block !important;
-					margin: 0 !important;
-					width: auto !important;
-				}
-				` : ''}
-			}
-		`;
-		document.head.appendChild(styleEl);
-
-		setTimeout(() => {
-			window.print();
-
-			const cleanup = () => {
-				styleEl.remove();
-				printContainer.remove();
-				component.unload();
-			};
-
-			window.addEventListener('afterprint', cleanup, { once: true });
-
-			setTimeout(cleanup, 2000);
-
-		}, 1000);
+	async runExport(file: TFile) {
+		const notice = new Notice("Calculating optimal layout...", 0);
+		const rawContent = await this.app.vault.read(file);
+		const processedContent = this.preprocessMarkdown(rawContent);
+		// TODO: implement this
 	}
 
 	async loadSettings() {

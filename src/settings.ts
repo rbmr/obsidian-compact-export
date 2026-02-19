@@ -1,7 +1,7 @@
 export interface CompactExportSettings {
-	maxPageCount: number;
 
 	// Layout Constraints
+	maxPageCount: number;
 	minColumns: number;
 	maxColumns: number;
 	minFontSize: number;
